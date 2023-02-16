@@ -26,6 +26,8 @@ import com.plcoding.permissionsguidecompose.ui.theme.PermissionsGuideComposeThem
 
 class MainActivity : ComponentActivity() {
 
+    // create this for the right order of permissions according to the queue
+    // We want to show RECORD_AUDIO before CALL_PHONE perm.
     private val permissionsToRequest = arrayOf(
         Manifest.permission.RECORD_AUDIO,
         Manifest.permission.CALL_PHONE,
@@ -38,16 +40,21 @@ class MainActivity : ComponentActivity() {
                 val viewModel = viewModel<MainViewModel>()
                 val dialogQueue = viewModel.visiblePermissionDialogQueue
 
+                // one permission request
                 val cameraPermissionResultLauncher = rememberLauncherForActivityResult(
+                    // contract - which activity gets launched for what kind of result
+                    // ActivityResultContracts - is a list of all contracts
                     contract = ActivityResultContracts.RequestPermission(),
+                    // onResult - gets called when the user selects grants or declines a permission
                     onResult = { isGranted ->
                         viewModel.onPermissionResult(
                             permission = Manifest.permission.CAMERA,
                             isGranted = isGranted
                         )
                     }
+                    // This is just declaring a launcher we will launch it from a button
                 )
-
+                // Never put on one screen two request launchers because you will get results from both
                 val multiplePermissionResultLauncher = rememberLauncherForActivityResult(
                     contract = ActivityResultContracts.RequestMultiplePermissions(),
                     onResult = { perms ->
@@ -72,7 +79,9 @@ class MainActivity : ComponentActivity() {
                     }) {
                         Text(text = "Request one permission")
                     }
+
                     Spacer(modifier = Modifier.height(16.dp))
+
                     Button(onClick = {
                         multiplePermissionResultLauncher.launch(permissionsToRequest)
                     }) {
@@ -81,6 +90,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 dialogQueue
+                    // We want the first dialog to be the last
                     .reversed()
                     .forEach { permission ->
                         PermissionDialog(
@@ -94,8 +104,12 @@ class MainActivity : ComponentActivity() {
                                 Manifest.permission.CALL_PHONE -> {
                                     PhoneCallPermissionTextProvider()
                                 }
+                                // a permission with did not want
                                 else -> return@forEach
                             },
+                            // Android does not support a way to find out whether a permission is permanently declined
+                            // If should not show Request Permission Rationale for a given permission we can be sure that the permission was permanently declined
+                            // it is not reliable because it will return false when we never requested the permission
                             isPermanentlyDeclined = !shouldShowRequestPermissionRationale(
                                 permission
                             ),
@@ -106,6 +120,7 @@ class MainActivity : ComponentActivity() {
                                     arrayOf(permission)
                                 )
                             },
+                            // Double decline go to settings
                             onGoToAppSettingsClick = ::openAppSettings
                         )
                     }
@@ -117,6 +132,7 @@ class MainActivity : ComponentActivity() {
 fun Activity.openAppSettings() {
     Intent(
         Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        // package name of our application to show the detail settings
         Uri.fromParts("package", packageName, null)
     ).also(::startActivity)
 }

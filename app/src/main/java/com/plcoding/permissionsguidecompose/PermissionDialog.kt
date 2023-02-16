@@ -14,12 +14,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+// Rationale Dialog
+
 @Composable
 fun PermissionDialog(
+    // Which text to show in the dialog according to permission
     permissionTextProvider: PermissionTextProvider,
     isPermanentlyDeclined: Boolean,
+    // listener if user clicks outside the dialog
     onDismiss: () -> Unit,
+    // listener if user clicks on OK to request a permission again after it was declined once
     onOkClick: () -> Unit,
+    // listener if the user needs to navigate to the settings if he declined a permission twice
     onGoToAppSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -29,11 +35,15 @@ fun PermissionDialog(
             Column(
                 modifier = Modifier.fillMaxWidth()
             ) {
+
                 Divider()
+
                 Text(
                     text = if(isPermanentlyDeclined) {
+                        // Declined twice go to settings
                         "Grant permission"
                     } else {
+                        // When want to grant the permission again
                         "OK"
                     },
                     fontWeight = FontWeight.Bold,
@@ -65,6 +75,7 @@ fun PermissionDialog(
     )
 }
 
+// More scalable way to provide messages about the state of a permission to a user
 interface PermissionTextProvider {
     fun getDescription(isPermanentlyDeclined: Boolean): String
 }
